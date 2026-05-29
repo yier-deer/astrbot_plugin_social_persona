@@ -792,6 +792,7 @@ class MatchmakerEngine:
             character_initial_world_time=world_time or datetime.now().strftime("%Y-%m-%d"),
             birthday=data.get("birthday", ""),
             life_archives=data.get("life_archives", []),
+            last_user_message_time="",
         )
 
         await self._store.create_persona(persona)
@@ -854,15 +855,21 @@ class MatchmakerEngine:
             attachment_avoidance=avoidance,
             self_esteem_stability=float(data.get("self_esteem_stability", 0.5)),
             conflict_style=data.get("conflict_style", "avoidant"),
+            initiative_tendency=float(data.get("initiative_tendency", 0.5)),
             typing_style=typing_style,
             typing_speed=int(data.get("typing_speed", 3)),
             image_enabled=int(data.get("image_enabled", 0)),
+            image_style_prompt=data.get("image_style_prompt", ""),
+            character_appearance=data.get("character_appearance", ""),
             life_stage=data.get("life_stage", ""),
             life_stage_detail=data.get("life_stage_detail", ""),
             current_location=data.get("current_location", ""),
             relationship_phase=phase,
             character_current_context=data.get("life_stage_detail", ""),
             character_initial_world_time=datetime.now().strftime("%Y-%m-%d"),
+            birthday=data.get("birthday", ""),
+            life_archives=data.get("life_archives", []),
+            last_user_message_time="",
         )
 
         await self._store.create_persona(persona)

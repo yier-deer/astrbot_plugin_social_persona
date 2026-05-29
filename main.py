@@ -245,6 +245,9 @@ class SocialPersonaPlugin(Star):
         today = datetime.now().strftime("%Y-%m-%d")
         events = await self.store._get(f"events:{persona.persona_id}:{today}", [])
 
+        persona.last_user_message_time = datetime.now().isoformat()
+        await self.store.update_persona(persona)
+
         world_date, world_dow = self.prompt_builder.compute_world_date(
             persona.character_initial_world_time, persona.created_at
         )

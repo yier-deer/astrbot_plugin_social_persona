@@ -266,6 +266,76 @@ def test_build_cron_wake_note_injects_life_archives():
     assert "高中被闺蜜背叛" in note, "CronJob 唤醒时也应注入人生经历"
 
 
+def test_create_persona_from_quick_data_has_new_fields():
+    """快速创建出的 Persona 包含新字段"""
+    from core.matchmaker.matchmaker_engine import MatchmakerEngine
+
+    class FakeStore:
+        async def create_persona(self, persona):
+            pass
+        async def init_relationship(self, persona_id, phase):
+            pass
+
+    class FakePrompt:
+        pass
+
+    engine = MatchmakerEngine(FakeStore(), FakePrompt())
+    data = {
+        "name": "小雨",
+        "age": 20,
+        "gender": "女",
+        "birthday": "2005-07-15",
+        "life_archives": [
+            {"stage": "adolescence", "time": "2019-09-01", "type": "personality_origin", "content": "被闺蜜背叛", "importance": 8}
+        ],
+    }
+
+    import asyncio
+    persona = asyncio.get_event_loop().run_until_complete(
+        engine._create_persona_from_quick_data(data)
+    )
+    assert persona.birthday == "2005-07-15"
+    assert len(persona.life_archives) == 1
+    assert persona.life_archives[0]["content"] == "被闺蜜背叛"
+    assert persona.last_user_message_time == ""
+
+
+def test_create_persona_from_session_has_new_fields():
+    """Matchmaker 7 阶段访谈创建出的 Persona 也包含新字段"""
+    from core.matchmaker.matchmaker_engine import MatchmakerEngine, MatchmakerSession
+
+    class FakeStore:
+        async def create_persona(self, persona):
+            pass
+        async def init_relationship(self, persona_id, phase):
+            pass
+
+    class FakePrompt:
+        pass
+
+    engine = MatchmakerEngine(FakeStore(), FakePrompt())
+    session = MatchmakerSession(
+        umo="test:session:123",
+        collected_data={
+            "name": "小雨",
+            "age": 20,
+            "gender": "女",
+            "birthday": "2005-07-15",
+            "life_archives": [
+                {"stage": "childhood", "time": "2012-01-01", "type": "key_event", "content": "养过一只仓鼠", "importance": 5}
+            ],
+        },
+    )
+
+    import asyncio
+    persona = asyncio.get_event_loop().run_until_complete(
+        engine._create_persona_from_session(session)
+    )
+    assert persona.birthday == "2005-07-15"
+    assert len(persona.life_archives) == 1
+    assert persona.last_user_message_time == ""
+
+
 def run_all():
     tests = [
         test_persona_new_fields_default,
@@ -277,6 +347,8 @@ def run_all():
         test_coerce_life_archives_type,
         test_build_chat_context_injects_life_archives,
         test_build_cron_wake_note_injects_life_archives,
+        test_create_persona_from_quick_data_has_new_fields,
+        test_create_persona_from_session_has_new_fields,
     ]
     passed = 0
     for fn in tests:
