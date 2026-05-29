@@ -1,5 +1,5 @@
 name: astrbot_plugin_social_persona
-display_name: 社交人格
+display_name: 虚拟人格铸造师
 desc: 关系状态驱动的 AI 社交模拟插件，支持非线性关系引擎、长期记忆、事件调度和主动消息
 version: v0.1.0
 author: SocialPersona
