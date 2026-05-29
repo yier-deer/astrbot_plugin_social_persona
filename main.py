@@ -752,8 +752,9 @@ class SocialPersonaPlugin(Star):
         if event.message_str.strip().startswith("/"):
             return
 
-        async def llm_generate(prompt: str) -> str:
-            provider_id = await self._get_chat_provider_id()
+        provider_id = await self._get_chat_provider_id()
+
+        async def _quick_llm(prompt: str) -> str:
             if not provider_id:
                 return ""
             try:
@@ -764,12 +765,26 @@ class SocialPersonaPlugin(Star):
                 )
                 return resp.completion_text if resp else ""
             except Exception as e:
-                logger.error(f"会话路由 LLM 调用失败: {e}")
+                logger.error(f"QuickCreate LLM 调用失败: {e}")
+                return ""
+
+        async def _matchmaker_llm(prompt: str) -> str:
+            if not provider_id:
+                return ""
+            try:
+                resp = await self.context.llm_generate(
+                    chat_provider_id=provider_id,
+                    prompt=prompt,
+                    system_prompt=self.prompt_builder.build_matchmaker_system_prompt(),
+                )
+                return resp.completion_text if resp else ""
+            except Exception as e:
+                logger.error(f"Matchmaker LLM 调用失败: {e}")
                 return ""
 
         quick_session = await self.matchmaker.get_quick_session(umo)
         if quick_session:
-            message, persona_id = await self.matchmaker.quick_create(umo, event.message_str, llm_generate)
+            message, persona_id = await self.matchmaker.quick_create(umo, event.message_str, _quick_llm)
             if persona_id:
                 persona = await self.store.get_persona(persona_id)
                 if persona:
@@ -782,7 +797,7 @@ class SocialPersonaPlugin(Star):
         if not session:
             return
 
-        message, persona_id = await self.matchmaker.process_message(umo, event.message_str, llm_generate)
+        message, persona_id = await self.matchmaker.process_message(umo, event.message_str, _matchmaker_llm)
         if persona_id:
             persona = await self.store.get_persona(persona_id)
             if persona:
