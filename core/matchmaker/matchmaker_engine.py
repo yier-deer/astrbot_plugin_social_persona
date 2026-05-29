@@ -296,19 +296,33 @@ class MatchmakerEngine:
             extracted = parsed.get("extracted_data", {})
             session.collected_data.update(extracted)
 
-            is_complete = parsed.get("is_complete", False)
-            if is_complete and stage_config.get("next_stage"):
-                session.current_stage = stage_config["next_stage"]
+            stages_ready = parsed.get("stages_ready", [])
+            if isinstance(stages_ready, list) and stages_ready:
+                completed = set(session.collected_data.get("_completed_stages", []))
+                completed.update(stages_ready)
+                session.collected_data["_completed_stages"] = list(completed)
 
-            if session.current_stage == "complete":
-                persona = await self._create_persona_from_session(session)
-                await self.cancel_session(umo)
-                return (
-                    f"✅ 角色「{persona.name}」创建成功！\n\n"
-                    f"已自动注册到人格设定列表，可在 WebUI 查看。\n"
-                    f"使用 /sp mount {persona.name} 挂载到机器人开始聊天。",
-                    persona.persona_id,
-                )
+                all_stages = ["basic_profile", "style_anchor", "boundary_probe",
+                              "attachment_explore", "system_detail", "sample_confirm"]
+                remaining = [s for s in all_stages if s not in completed]
+
+                next_hint = parsed.get("next_stage_hint", "")
+                if next_hint == "confirm" or not remaining:
+                    session.current_stage = "complete"
+                elif next_hint in all_stages:
+                    session.current_stage = next_hint
+                else:
+                    session.current_stage = remaining[0]
+
+                if session.current_stage == "complete":
+                    persona = await self._create_persona_from_session(session)
+                    await self.cancel_session(umo)
+                    return (
+                        f"✅ 角色「{persona.name}」创建成功！\n\n"
+                        f"已自动注册到人格设定列表，可在 WebUI 查看。\n"
+                        f"使用 /sp mount {persona.name} 挂载到机器人开始聊天。",
+                        persona.persona_id,
+                    )
 
             await self._store._put(f"matchmaker_session:{umo}", session.to_dict())
 
