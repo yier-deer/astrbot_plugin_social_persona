@@ -679,6 +679,16 @@ class SocialPersonaPlugin(Star):
             lines.append(f"\n👤 外貌：")
             lines.append(f"  {target.character_appearance}")
 
+        if target.birthday:
+            lines.append(f"\n🎂 生日：{target.birthday}")
+
+        if target.life_archives:
+            lines.append(f"\n📜 人生经历（{len(target.life_archives)} 条）：")
+            sorted_archives = sorted(target.life_archives, key=lambda x: x.get("time", ""))
+            for a in sorted_archives:
+                stage_name = {"childhood": "童年", "adolescence": "青少年", "young_adult": "青年", "": ""}.get(a.get("stage", ""), a.get("stage", ""))
+                lines.append(f"  [{stage_name}] {a.get('time', '')}：{a.get('content', '')}")
+
         from datetime import datetime
         today = datetime.now().strftime("%Y-%m-%d")
         events = await self.store._get(f"events:{target.persona_id}:{today}", [])

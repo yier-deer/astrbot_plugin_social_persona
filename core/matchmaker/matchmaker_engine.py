@@ -678,6 +678,22 @@ class MatchmakerEngine:
             }
             logger.debug(f"QuickCreate 数据修正: big_five 缺失，从 communication_style 推断")
 
+        birthday = data.get("birthday")
+        if birthday is not None and isinstance(birthday, str):
+            try:
+                datetime.strptime(birthday, "%Y-%m-%d")
+            except ValueError:
+                data["birthday"] = ""
+                logger.debug(f"QuickCreate 数据修正: birthday={birthday!r} 格式无效 → ''")
+        elif birthday is not None:
+            data["birthday"] = ""
+            logger.debug(f"QuickCreate 数据修正: birthday={birthday!r} 类型无效 → ''")
+
+        life_archives = data.get("life_archives")
+        if life_archives is not None and not isinstance(life_archives, list):
+            data["life_archives"] = []
+            logger.debug(f"QuickCreate 数据修正: life_archives 非列表 → []")
+
         return data
 
     def _get_missing_required(self, session: QuickCreateSession) -> list:
@@ -774,6 +790,8 @@ class MatchmakerEngine:
             character_current_context=data.get("character_current_context", ""),
             relationship_phase=phase,
             character_initial_world_time=world_time or datetime.now().strftime("%Y-%m-%d"),
+            birthday=data.get("birthday", ""),
+            life_archives=data.get("life_archives", []),
         )
 
         await self._store.create_persona(persona)
@@ -789,6 +807,8 @@ class MatchmakerEngine:
             f"  年龄：{persona.age}岁",
             f"  性别：{persona.gender}",
         ]
+        if persona.birthday:
+            lines.append(f"  生日：{persona.birthday}")
         if persona.life_stage_detail:
             lines.append(f"  身份：{persona.life_stage_detail}")
         if persona.current_location:
@@ -805,6 +825,8 @@ class MatchmakerEngine:
             lines.append(f"  发图片：是（{persona.image_style_prompt}）")
         if persona.character_initial_world_time:
             lines.append(f"  世界时间：{persona.character_initial_world_time}")
+        if persona.life_archives:
+            lines.append(f"  人生经历：{len(persona.life_archives)} 条")
         return "\n".join(lines)
 
     async def _create_persona_from_session(self, session: MatchmakerSession) -> Persona:

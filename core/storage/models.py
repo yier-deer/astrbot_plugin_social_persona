@@ -65,6 +65,10 @@ class Persona:
     relationship_phase: str = "stranger"
     character_initial_world_time: str = ""
 
+    birthday: str = ""
+    life_archives: list = field(default_factory=list)
+    last_user_message_time: str = ""
+
     created_at: str = ""
     session_key: str = ""
 

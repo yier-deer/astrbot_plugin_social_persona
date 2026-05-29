@@ -78,6 +78,14 @@ class PromptBuilder:
             if rhythm in rhythm_map:
                 parts.append(rhythm_map[rhythm])
 
+        life_archives = persona.get("life_archives", [])
+        if isinstance(life_archives, list):
+            high_importance = [a for a in life_archives if isinstance(a, dict) and a.get("importance", 0) >= 7]
+            if high_importance:
+                parts.append(f"\n你的人生经历：")
+                for a in sorted(high_importance, key=lambda x: x.get("time", "")):
+                    parts.append(f"  - {a.get('time', '')}：{a.get('content', '')}")
+
         trust = relationship.get("trust", 30)
         closeness = relationship.get("closeness", 10)
         tension = relationship.get("tension", 0)
@@ -201,6 +209,14 @@ class PromptBuilder:
             parts.append("你在关系中容易焦虑不安，害怕被忽视。")
         elif avoidance >= 0.5:
             parts.append("你在关系中倾向保持距离，过于亲密会让你不适。")
+
+        life_archives = persona.get("life_archives", [])
+        if isinstance(life_archives, list):
+            high_importance = [a for a in life_archives if isinstance(a, dict) and a.get("importance", 0) >= 7]
+            if high_importance:
+                parts.append(f"\n你的人生经历：")
+                for a in sorted(high_importance, key=lambda x: x.get("time", "")):
+                    parts.append(f"  - {a.get('time', '')}：{a.get('content', '')}")
 
         parts.append(f"\n⏰ {event_time} 发生了一件事：{event_desc}（类型：{event_type}）")
 
@@ -329,12 +345,25 @@ class PromptBuilder:
       - transition_reason：一句话说明变化原因
     · 无变化 → should_transition 设为 false，其余字段留空字符串
 
+人生档案追加判断（重要——不是每天都写！）：
+  判断今天是否发生了值得写入你人生档案的里程碑事件。以下情况可以写：
+  · 人生重大转折：毕业、入学、入职、创业、结婚、搬家去新城市
+  · 与用户关系突破：从陌生人变成熟人、从朋友变成密友
+  · 重要的情感经历：第一次对某人敞开心扉、经历重大冲突与和解
+  以下情况不要写：
+  · 普通的日常（上课、吃饭、自习、运动）
+  · 没有实质改变的常规社交
+  
+  如果有里程碑事件，在 today_reflection 中填写 life_archive_entry 字段；
+  如果只是普通的一天，将 life_archive_entry 设为 null。
+
 JSON格式：
 {{
   "today_reflection": {{
     "raw_text": "今天的感受和思考...",
     "key_memories": [{{"content":"今天最值得记住的一件事","importance":7}}],
     "relationship_summary": "与用户的关系变化",
+    "life_archive_entry": null,
     "life_stage_transition": {{
       "should_transition": false,
       "new_life_stage": "",
@@ -429,6 +458,16 @@ JSON格式：
   "relationship_phase": "初始关系阶段（stranger/acquaintance/friend/close_friend）",
   "character_initial_world_time": "角色世界初始日期YYYY-MM-DD格式，没有则为空",
   "initiative_tendency": 主动联系倾向0到1浮点数,
+  "birthday": "角色出生日期YYYY-MM-DD格式，没有则为空",
+  "life_archives": [
+    {{
+      "stage": "childhood/adolescence/young_adult",
+      "time": "YYYY-MM-DD格式的日期",
+      "type": "key_event/personality_origin/life_turning_point/created_event",
+      "content": "描述文本，写清楚这件事对角色性格或人生的影响",
+      "importance": 1到10的整数，越高越影响性格
+    }}
+  ],
   "big_five": {{
     "openness": 开放性0到1,
     "conscientiousness": 尽责性0到1,

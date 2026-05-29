@@ -170,6 +170,20 @@ class EventEngine:
             await self._store.update_persona(persona)
             logger.info(f"Persona {persona.name} 生命阶段切换: {new_stage} (原因: {reason})")
 
+        life_archive_entry = reflection.get("life_archive_entry")
+        if isinstance(life_archive_entry, dict) and life_archive_entry.get("content"):
+            entry = {
+                "stage": persona.life_stage or "young_adult",
+                "time": world_date,
+                "type": "created_event",
+                "content": life_archive_entry.get("content", ""),
+                "importance": life_archive_entry.get("importance", 7),
+            }
+            persona.life_archives = list(persona.life_archives or [])
+            persona.life_archives.append(entry)
+            await self._store.update_persona(persona)
+            logger.info(f"Persona {persona.name} 人生经历新增: {entry['content'][:50]}")
+
         await self._schedule_event_cronjobs(persona_id, events)
 
         return events
