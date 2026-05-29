@@ -1,0 +1,22 @@
+{
+  "sleep_response_mode": {
+    "description": "Persona 睡眠时的回复行为",
+    "type": "string",
+    "hint": "drowsy: 注入被吵醒提示，LLM 用困倦语气回复；silent: 不注入上下文，走默认流程；ignore: 完全不回复",
+    "default": "drowsy",
+    "options": ["drowsy", "silent", "ignore"],
+    "obvious_hint": true
+  },
+  "memory_search_limit": {
+    "description": "记忆检索返回的最大条数",
+    "type": "int",
+    "hint": "每次聊天时从长期记忆中检索的相关记忆数量",
+    "default": 5
+  },
+  "chat_provider_id": {
+    "description": "指定使用的 LLM Provider ID",
+    "type": "string",
+    "hint": "留空则自动选择第一个可用的聊天模型 Provider。一般无需修改。",
+    "default": ""
+  }
+}

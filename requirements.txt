@@ -1,0 +1,1 @@
+# 无外部依赖 — 记忆服务使用 AstrBot 内置 FaissVecDB + EmbeddingProvider
